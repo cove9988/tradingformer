@@ -9,6 +9,7 @@
 bar的特征：
   
   每个token [n] 的values
+  
       distant[n]=open[n]- open[0]
       open_t[n] = open[0]-distant[n] = 0.0
       high_t[n] = high[n] - open[n] 
