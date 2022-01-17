@@ -1,16 +1,16 @@
-![Informer: Beyond Efficient Transformer for Long Sequence Time-Series Forecasting](../images/v2-e0d3335bd0434aae2b4c899ac8e034db_1440w.png)
-<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=default"></script>
+![Informer: Beyond Efficient Transformer for Long Sequence Time-Series Forecasting](../papers/images/v2-e0d3335bd0434aae2b4c899ac8e034db_1440w.png)
+
 # Informer: Beyond Efficient Transformer for Long Sequence Time-Series Forecasting
 
 **摘要：**
 
 许多实际应用需要对长时间序列进行预测，例如用电规划。 长序列时间预测（LSTF）要求模型具有较高的预测能力，即有效地捕捉输出和输入之间精确的长程依赖关系的能力。 最近的研究表明，Transformer有提高预测能力的潜力。 然而，Transformer存在几个严重的问题，使其无法直接适用于LSTF，包括二次方的时间复杂度、高内存使用量和编码器-解码器架构的固有限制。 为了解决这些问题，我们为LSTF设计了一个高效的基于Transformer的模型，命名为Informer，具有三个明显的特点。 (i) ProbSparse自注意力机制，在时间复杂度和内存使用方面达到了
-![](../images/equation.svg)
+![](../papers/images/equation.svg)
 并且在序列的依存关系排列上有相当的性能。 (ii)自注意力蒸馏通过将级联层的输入减半来突出主要注意力，并有效地处理极长的输入序列。 (iii) 生成式解码器虽然在概念上很简单，但它是在一次前向操作中预测长时序序列，而不是一步一步的方式，这极大地提高了长时序预测的推理速度。 在四个大规模数据集上进行的广泛实验表明，Informer明显优于现有方法，并为LSTF问题提供了新的解决方案。
 
 **介绍**
 
-![](../images/v2-d1d9ab1c3f4f8539e1e75f77cc1e9214_720w.jpg)
+![](../papers/images/v2-d1d9ab1c3f4f8539e1e75f77cc1e9214_720w.jpg)
 
 时间序列预测是许多领域的关键要素，如传感器网络监测、能源和智能电网管理、经济和金融，以及疾病传播分析。 在这些情况下，我们可以利用大量的过去行为的时间序列数据来进行长期的预测，即长序列时间序列预测（LSTF）。 然而，现有的方法大多是针对短序列数据问题设计的，如预测48个点或更少。越来越长的序列使模型的预测能力受到挑战，以至于这种趋势阻碍了对LSTF的研究。 作为一个经验性的例子，图（1）显示了在一个真实数据集上的预测结果，LSTM网络预测了一个变电站的每小时温度，从短期（12点，0.5天）到长期（480点，20天）。 当预测长度大于48点时，整体性能差距很大（图（1b）中的实心星），MSE上升到不满意的性能，推理速度急剧下降，LSTM模型开始失效。
 
@@ -25,9 +25,9 @@ Vanilla Transformer在解决LSTF时有三个明显的局限性：
 1.  **自我注意的二次方计算。** 
 自我注意机制的原子操作，即规范的点积，导致每层的时间复杂性和内存使用量为\mathcal{O}(L^2)。
 
-2.  **长输入的堆叠层中的内存瓶颈。** J个编码器/解码器层的堆叠使得总的内存使用量为 ![[公式]](../images/equation(2)$$.svg) ，这限制了模型在接收长序列输入时的可扩展性。
+2.  **长输入的堆叠层中的内存瓶颈。** J个编码器/解码器层的堆叠使得总的内存使用量为 ![[公式]](../papers/images/equation(2)$$.svg) ，这限制了模型在接收长序列输入时的可扩展性。
 3.  **预测长输出的速度大幅下降。**普通Transformer的动态解码使得逐步推理的速度和基于RNN的模型一样慢(图(1b))。
-![](../images/v2-10104102ab4a88d0a7b18b8929787fd9_720w.jpg)
+![](../papers/images/v2-10104102ab4a88d0a7b18b8929787fd9_720w.jpg)
 
 过去一些工作都基于启发式的假设，对于attention的计算的选取是由固定的规则决定的，不能自适应得根据具体情况决定计算哪些attention，我们提出的Informer解决了这个问题。
 
@@ -35,7 +35,7 @@ Vanilla Transformer在解决LSTF时有三个明显的局限性：
 
 * 我们提出Informer成功地增强LSTF问题中的预测能力，从而验证类Transformer的模型的潜在价值，以捕获长时间序列输出和输入之间的各个远程依赖性。
 * 我们提出了ProbSparse自注意力机制来有效地替换常规的自注意力，并实现 
-![[公式]](../images/equation (2).svg)
+![[公式]](../papers/images/equation (2).svg)
 时间复杂度和 
 ![[公式]](https://www.zhihu.com/equation?tex=O%28LlogL%29)
 内存使用。
@@ -47,7 +47,7 @@ Vanilla Transformer在解决LSTF时有三个明显的局限性：
 
 **方法**
 
-![](../images/v2-03ba0f2b93e5756396cb38ac474883b0_720w.jpg)
+![](../papers/images/v2-03ba0f2b93e5756396cb38ac474883b0_720w.jpg)
 
 **1.高效self-attention机制**
 
@@ -87,16 +87,16 @@ Vaswani提出的常规自注意力可以表现为上面的公式，如果对Q中
 
 作为ProbSparse自注意力机制的自然结果，编码器的特征图具有V值的冗余组合。我们使用蒸馏操作突出主要特征，并在下一层生成focus的自注意力特征图，急剧地修剪输入在时间上的维度。受空洞卷积的启发，我们从第j层到第( j + 1 )层的“蒸馏”过程如下
 
-![](../images//v2-8cebcb746554e32ca4762ae4f5469d2b_720w.png)
+![](../papers/images//v2-8cebcb746554e32ca4762ae4f5469d2b_720w.png)
 
 其中![[公式]](https://www.zhihu.com/equation?tex=%5B%5Ccdot%5D_%7BAB%7D)包含Multi-Head ProbSparse self-attention以及重要的attention block的操作。为了增强distilling操作的鲁棒性，我们构建了halving replicas，并通过一次删除一层（如上图）来逐步减少自关注提取层的数量，从而使它们的输出维度对齐。因此，我们将所有堆栈的输出串联起来，并得到encoder的最终隐藏表示。
 
 **3.解码器：通过一个前向过程生成长序列输出**
 
-![](../images/v2-03ba0f2b93e5756396cb38ac474883b0_720w.jpg)
+![](../papers/images/v2-03ba0f2b93e5756396cb38ac474883b0_720w.jpg)
 
 论文使用如图（2）所示的标准的解码器结构，它由2个相同的多头注意力层的堆栈组成。但是，在长时间预测中，采用了**生成推理**来缓解速度瓶颈。我们向解码器提供以下向量：
 
-![](../images/v2-1fe6f1c1f89785f2939f75f43361773c_720w.png)
+![](../papers/images/v2-1fe6f1c1f89785f2939f75f43361773c_720w.png)
 
 从长序列中采样一个 ![[公式]](https://www.zhihu.com/equation?tex=L_%7Btoken%7D) 的输出序列之前的片段，与 ![[公式]](https://www.zhihu.com/equation?tex=X_0%5Et) 拼接，输入decoder
