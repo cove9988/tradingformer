@@ -8,17 +8,25 @@
 # Tradingformer
 
 ## 背景
-交易价格（trading price）在一段时间内可以浓缩为一个bar（比如常用的candlestick），Bar应该是一种即包含着价格随机变动，有存在一定规律（比如趋势）的信息。所以怎么去用一个向量去映射出来Bar的信息，就是bar2vec的意义
 
-Candlestick是浓缩了一段时间内价格变化的，只给出了这个时间段的价格四个基本表征（open，close，high，low)，不包括价格在这段时间内的分布状态，（是不是在加上价格在时间段内的形态分布表征？这一信息对图形分析用处不大，但可能对机器学习有很大用处），本文用bar来表述这一概念。
+### 关于BAR
 
-在一段时间内的一系列bar（与时间单位无关）就是这段时间内价格变化的表述，也就是价格变化的语言。但与NLP不同的是，序列的bar不是每一个都有意义，很大的bar并没有价格趋势的表征，或者表征是完全淹没在噪音中， 特别是当bar的时间单位越小，其随机变动（即 白噪音）的成分和比重就越大，我们都知道噪音是随机的，不可预测的。所以在小的时间单位，只有剧烈的，明显的价格趋势的变动特征信号才有意义，这样可能对于基于1min与5min的model，5min可能更好，因为其价格趋势表征更为突出。即便如此，这样在价格变动的特征空间中映射的效应也是一个long tail。即大多数的bar的特征空间映射值是被淹没在噪声中，没有可预测性的。只有long tail的head部分才能为价格提供预测的支持。
+交易价格（trading price）在一段时间内可以浓缩为一个bar（比如常用的candlestick）本文用bar来表述这一概念。Bar应该是一种即包含着价格随机变动，有存在一定规律（比如趋势）的信息。所以我们要用一个向量去映射出来Bar的信息，我们可以做bar2vec的转换。
+
+
+Candlestick是浓缩了一段时间内价格变化的，只给出了这个时间段的价格四个基本表征（open，close，high，low)，不包括价格在这段时间内的分布状态，
+可以考虑在bar pre-process 时候做一个bar的正态分布的指标值，加如价格在时间段内的形态分布表征，虽然这一信息对图形分析用处不大，但可能对机器学习有很大用处，
+
+在一段时间内的一系列bar（与时间单位无关）就是这段时间内价格变化的表述，也就是价格变化的语言。但与NLP不同的是，序列的bar不是每一个都有意义，很大一部分的bar并没有价格趋势的表征，或者表征是完全淹没在噪音中， 特别是当bar的时间单位越小，其随机变动（即 白噪音）的成分和比重就越大，我们都知道噪音是随机的，不可预测的。所以在小的时间单位，只有剧烈的，明显的价格趋势的变动特征信号才有意义，这样可能对于基于1min与5min的model，5min可能效果更好，因为其价格趋势表征更为突出。即便如此，这样在价格变动的特征空间中映射的效应也是一个long tail。即大多数的bar的特征空间映射值是被淹没在噪声中，没有可预测性的。只有long tail的head部分才能为价格提供预测的支持。这就是为什么我们做encoding/decoding考虑用 Probability Sparse Self-Attention。
+
+### Trading Market
 
 从market的角度来说，什么是价格变化的推动力，为什么价格要变化？价格理论认为:
 
     ①市场的行为包含一切信息
     ②价格沿趋势移动
     ③历史会重复
+
 
 如果价格理论是正确的，那么根据第②，③条，价格沿趋势移动，可以理解为，价格在一定的时间段内是有趋势的，是可以预测的。市场的行为也可以看成价格的变动。而第①条，推动价格变化的信息包括如下主要几项：
 1. 买，卖双方对市场价格的判定，（银行，机构，做市商）
@@ -39,7 +47,10 @@ Transformer 在NLP （BERT,GPT) 和 CV （ViTx）方面的进展是有目共睹�
 考虑的bar的the long tail distribution in self-attention feature map的特征，encoding 可以multi-head probSparse self-attention。这样可以减少memory 和运算的开销。但采用transformer original encoding 应该也是可以的
 
 ![model](../papers/images/20220117_140910.jpg)
-### Bar 预处理
+
+### Input Pre-process
+
+#### Bar 预处理
 1. 长度 (day) 
 相当月NLP句子的长度，不可以太长，维度增加（**2）， 用自然的天是一个理想的分割
 
@@ -56,7 +67,7 @@ Transformer 在NLP （BERT,GPT) 和 CV （ViTx）方面的进展是有目共睹�
 Bar 5min 信息损失小，噪音低， 长度合理
 
 
-### bar的编码设计 （改进中）
+#### bar的编码设计 （改进中）
 
     [stock_name][r_bar[0]]...[r_bar[n]]
 
@@ -77,7 +88,7 @@ Bar 5min 信息损失小，噪音低， 长度合理
 
     bar[n] = norm(bar[n][open_price],daily[high,low])
 
-### positional （The Uniform Input Representation）
+#### positional （The Uniform Input Representation）
 
 Local Time Stamp 
 
@@ -87,13 +98,4 @@ Global Time Stamp （可学习）
 
     由于所以的时间事件在一天中可以表示成为统一的limited vocab size （如果 taking minute or （5 min） as the finest granularity）
 ![model](../papers/images/20220117_095832.jpg)
-
-
-
-
-
-
-
-
-
 
