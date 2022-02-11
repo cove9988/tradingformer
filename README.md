@@ -46,7 +46,7 @@ Transformer 在NLP （BERT,GPT) 和 CV （ViTx）方面的进展是有目共睹�
 
 考虑的bar的the long tail distribution in self-attention feature map的特征，encoding 可以multi-head probSparse self-attention。这样可以减少memory 和运算的开销。但采用transformer original encoding 应该也是可以的
 
-![model](../papers/images/20220117_140910.jpg)
+![model](./papers/images/20220117_140910.jpg)
 
 ### Input Pre-process
 
@@ -97,5 +97,5 @@ Local Time Stamp
 Global Time Stamp （可学习）
 
     由于所以的时间事件在一天中可以表示成为统一的limited vocab size （如果 taking minute or （5 min） as the finest granularity）
-![model](../papers/images/20220117_095832.jpg)
+![model](./papers/images/20220117_095832.jpg)
 
