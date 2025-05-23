@@ -1,63 +1,57 @@
-# Plan
-Fine-Tuning an LLM for Forex Trading
-1. Model Selection Choose a large language model (LLM) suitable for fine-tuning in the context of Forex trading. The model should demonstrate strong understanding of price movements, financial indicators, and trading strategies.
-2. Forex Data and Signal Definition
-   * Select a Forex trading pair (e.g., EUR/USD) and use historical data with 5-minute bar intervals.
-   * Identify and use multiple technical indicators (e.g., MACD, RSI, Bollinger Bands) to define entry and exit signals for trades.
-3. LLM Fine-Tuning for Trading Decisions
-   * Trade Plan Generation: Train the LLM to generate trade plans based on the technical indicators and market signals. Each plan should include entry points, profit-taking thresholds, and stop-loss levels.
-   * Real-time Plan Adjustment: Fine-tune the LLM to dynamically update trade plans as new 5-minute bars are received, with the goal of maximizing profit and minimizing risk in real-time trading scenarios.
-   
+# Project Title: LLM for Trading Application
 
-Background
-About Bars in Trading
-In trading, price movements over a specific time interval are typically condensed into a structure known as a bar—commonly visualized as a candlestick. In this context, we use the term bar to represent such condensed time-based price data.
+## 1. Overview
+Brief description of the project: To select, prepare data for, and outline the fine-tuning process for an LLM tailored to trading applications.
 
-A bar encapsulates both random fluctuations and patterned movements (such as trends) within a time period. Therefore, we can think of a bar as a rich source of information that can be embedded into a vector space—an approach we refer to as bar2vec.
+## 2. LLM Selection for Trading Tuning
+- **Selected Model:** Mistral-7B-Instruct-v0.2
+- **Reasoning:** Good balance of strong performance (reasoning, instruction following), manageable size (7 billion parameters) for fine-tuning on platforms like Google Colab (especially with QLoRA), active community support, and successful use as a base for domain-specific tuning.
+- **Alternatives Considered:** Llama-2-7B/13B, Gemma-7B, other smaller Qwen models. These are also strong candidates but Mistral-7B-Instruct offers a very competitive edge in performance for its size.
 
-Candlesticks represent a time interval using four price points: open, close, high, and low. However, they do not capture the distribution of price movements within that interval. To address this, during bar preprocessing, we can extract additional features, such as statistical descriptors (e.g., normality indicators or intra-bar price distribution), which may not be visually informative for technical analysis but could be highly beneficial for machine learning models.
+## 3. Tuning Data Requirements
+- **Format:** JSONL (JSON Lines), where each line is a JSON object.
+- **Core Structure per JSON Object:**
+  ```json
+  {
+    "instruction": "<Your trading-related question or task>",
+    "input": "<Optional: context like market data, news, portfolio details>",
+    "output": "<The desired, ideal response from the LLM>"
+  }
+  ```
+- **Content Categories & Examples:**
+  - **A. Market Analysis & Prediction:** (Instructions on analyzing trends, predicting movements, sentiment analysis using market data, technical indicators, news as input. Output should be the analysis/prediction.)
+  - **B. Trading Strategy Generation & Explanation:** (Instructions to develop/explain strategies, risks, or generate trading code. Output is the strategy, explanation, or code.)
+  - **C. Portfolio Management & Queries:** (Instructions on diversification, tax implications (with disclaimers), beta calculation using portfolio details as input. Output provides relevant information.)
+  - **D. Order Execution & Terminology:** (Instructions to explain trading terms or scenarios. Output gives clear definitions/explanations.)
+- **Data Quantity & Quality:** Aim for 500-1000+ high-quality, diverse, and accurate examples. Outputs should show reasoning and include disclaimers about not providing financial advice where appropriate.
+- **Formatting for Training:** The SFTTrainer expects a single text field, typically formatted as: `<s>[INST] Instruction (plus Input if provided) [/INST] Output </s>`.
 
-A sequence of bars over time, regardless of the time unit, forms the language of price movement. However, unlike sequences in NLP, not every bar carries meaningful information. Many bars—especially in short timeframes—are dominated by random noise rather than predictive patterns. The shorter the bar interval (e.g., 1-minute vs 5-minute), the greater the ratio of noise (white noise) to signal.
+## 4. Tuning Script, Setup, and Steps (Google Colab Focus)
+- **Libraries:** Hugging Face `transformers`, `peft` (for LoRA), `datasets`, `bitsandbytes` (for QLoRA), `trl` (for SFTTrainer).
+- **Script Overview:** A Python script that performs the following:
+  1. Loads the dataset (JSONL) and formats it into the required instruction-response structure.
+  2. Loads the base model (Mistral-7B-Instruct-v0.2) with 4-bit quantization (QLoRA) and its tokenizer.
+  3. Configures LoRA (Low-Rank Adaptation) for parameter-efficient fine-tuning.
+  4. Sets up `TrainingArguments` for the SFTTrainer.
+  5. Initializes the `SFTTrainer` with the model, tokenizer, dataset, and PEFT config.
+  6. Runs the training loop.
+  7. Saves the trained LoRA adapter.
+  8. (Optional) Merges the adapter with the base model and saves the full model.
+  9. (Optional) Includes a basic test pipeline.
+- **Setup in Google Colab:**
+  1. Open a new Colab notebook.
+  2. Change runtime to GPU (T4 is usually available in free tier).
+  3. Install libraries: `!pip install -q transformers datasets accelerate peft bitsandbytes trl`
+  4. Upload `trading_data.jsonl` or mount Google Drive.
+  5. (Optional) Login to Hugging Face Hub: `from huggingface_hub import notebook_login; notebook_login()`
+- **Running the Tuning:**
+  1. Paste the provided Python script into a Colab cell.
+  2. Adjust parameters (model names, dataset path, epochs, batch size, LoRA config especially `target_modules`).
+  3. Run the cell.
+  4. Monitor training and save checkpoints to Google Drive.
 
-Given that noise is unpredictable, only clear, strong price movements carry meaningful predictive signals in short timeframes. This is why models based on 5-minute bars often outperform 1-minute bar models—5-minute bars better express trends rather than noise.
-
-Still, the overall information distribution remains a long-tail phenomenon: most bars are noise-dominated and uninformative, while only a small subset—those in the "head" of the distribution—are useful for prediction. This justifies the use of Probabilistic Sparse Self-Attention mechanisms in our encoder/decoder architecture to focus on the most informative parts of the sequence.
-
-Understanding the Trading Market
-From a market theory perspective, what drives price changes? Why do prices move at all?
-
-Classical price theory posits:
-
-The market reflects all available information.
-
-Prices move in trends.
-
-History tends to repeat itself.
-
-If these assumptions hold, especially points 2 and 3, then price trends over time are predictable to some extent. Price changes are the result of market behavior, and the market, in turn, is influenced by several core forces:
-
-Market participant behavior — decisions made by banks, institutions, and market makers based on their valuation of the asset.
-
-External information flow — such as interest rate announcements, economic outlooks, or unexpected geopolitical events.
-
-Seasonal and macroeconomic cycles — recurring patterns tied to time of year or economic phases.
-
-However, bar sequences alone only reflect the output (price changes)—they don’t capture the underlying drivers of these changes. Crucially, the most important driver—market participant behavior—is not directly observable or quantifiable.
-
-This introduces information asymmetry into the prediction problem: our models must infer future prices without full knowledge of the forces causing those changes.
-
-To improve predictive reliability, we should incorporate external and temporal context (points 2 and 3 above) into both historical and future price modeling. This means enriching each bar with additional time-based metadata such as:
-
-Hour of the day
-
-Day of the week
-
-Day of the month
-
-Month and year
-
-Trading market or region
-
-Related news sentiment or events
-
-This temporal and contextual data can help bridge the gap between observable price changes and the latent forces behind them.
+## 5. Hardware Requirements (Google Colab Focus)
+- **GPU:** NVIDIA T4 (16GB VRAM) is the minimum viable for 7B models with QLoRA. A100 (40GB+) or V100 (16/32GB) in Colab Pro are better.
+- **RAM:** ~12GB (standard Colab) is generally sufficient for the script and data. High RAM option in Colab Pro is a plus.
+- **Storage:** Use Google Drive for persistent storage of datasets, scripts, and model adapters/checkpoints. Session storage is temporary.
+- **Key Techniques for Colab:** Utilize QLoRA, manage batch sizes carefully, use gradient checkpointing, and save work frequently to Google Drive.
